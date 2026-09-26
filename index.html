@@ -1,291 +1,86 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Maison Noir — Virtual Bistro</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          espresso: '#2b1a12',
-          mocha:    '#4a2f21',
-          crema:    '#f5e6d3',
-          caramel:  '#c98a4b',
-          gold:     '#e0b25e',
-        },
-        fontFamily: {
-          display: ['"Playfair Display"', 'serif'],
-          body:    ['Inter', 'system-ui', 'sans-serif'],
-        },
-      },
-    },
-  };
-</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  body { background: radial-gradient(1200px 600px at 50% -10%, #4a2f21 0%, #2b1a12 60%); }
-  .card-hover { transition: transform .25s ease, box-shadow .25s ease; }
-  .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -20px rgba(224,178,94,.45); }
-  .steam::before, .steam::after {
-    content:''; position:absolute; bottom:100%; left:50%; width:6px; height:22px;
-    background:linear-gradient(to top, rgba(245,230,211,.5), transparent);
-    border-radius:9999px; filter:blur(2px);
-    animation: steam 3.5s ease-in-out infinite;
-  }
-  .steam::after { left: calc(50% + 10px); animation-delay: 1.2s; }
-  @keyframes steam {
-    0% { transform: translateY(0) scaleY(.8); opacity:.7 }
-    50% { transform: translateY(-14px) scaleY(1.1); opacity:.35 }
-    100% { transform: translateY(-28px) scaleY(.8); opacity:0 }
-  }
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy Me a Coffee ☕</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body class="font-body text-crema min-h-screen">
+<body>
+<div class="container">
+  <header>
+    <h1>☕ Buy Me a Coffee</h1>
+    <p class="subtitle">Fuel my code with caffeine — pay with crypto!</p>
+  </header>
 
-<!-- Header -->
-<header class="max-w-6xl mx-auto px-6 pt-10 flex items-center justify-between">
-  <div class="flex items-center gap-3">
-    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-caramel flex items-center justify-center text-espresso font-bold">M</div>
-    <div>
-      <p class="font-display text-xl leading-none">Maison Noir</p>
-      <p class="text-xs text-crema/60">Virtual Bistro</p>
+  <section class="drinks" id="drinksGrid">
+    <!-- Drink cards injected by JS -->
+  </section>
+
+  <!-- Custom amount section -->
+  <section class="custom-section hidden" id="customSection">
+    <h2>Choose Your Amount</h2>
+    <div class="custom-input-wrap">
+      <span class="currency">$</span>
+      <input type="number" id="customAmount" min="1" step="1" placeholder="10" value="10">
+      <span class="usd-label">USD</span>
     </div>
-  </div>
-  <button id="cartBtn" class="relative rounded-full border border-gold/40 px-4 py-2 text-sm hover:bg-gold/10 transition">
-    🛒 Cart <span id="cartCount" class="ml-1 inline-block min-w-5 text-center rounded-full bg-gold text-espresso text-xs font-semibold px-1.5">0</span>
-  </button>
-</header>
+    <div class="quick-amounts">
+      <button data-amt="5">$5</button>
+      <button data-amt="10">$10</button>
+      <button data-amt="25">$25</button>
+      <button data-amt="50">$50</button>
+      <button data-amt="100">$100</button>
+    </div>
+    <button class="btn-primary" id="customCheckoutBtn">Continue →</button>
+  </section>
 
-<!-- Hero -->
-<section class="max-w-4xl mx-auto text-center px-6 pt-14 pb-8">
-  <p class="uppercase tracking-[0.3em] text-gold/80 text-xs mb-4">Est. this very moment</p>
-  <h1 class="font-display text-5xl md:text-6xl leading-tight">
-    Buy the barista<br/>
-    <span class="text-gold">a coffee.</span>
-  </h1>
-  <p class="mt-6 text-crema/70 max-w-xl mx-auto">
-    Pick something from our little menu. Pay with crypto. Every cup keeps the lights warm
-    and the espresso flowing.
-  </p>
-</section>
-
-<!-- Menu -->
-<main class="max-w-6xl mx-auto px-6 pb-28">
-  <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-</main>
-
-<!-- Cart drawer -->
-<div id="cartOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-40"></div>
-<aside id="cartDrawer" class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-espresso border-l border-gold/20 translate-x-full transition-transform duration-300 z-50 flex flex-col">
-  <div class="p-6 border-b border-gold/15 flex items-center justify-between">
-    <h2 class="font-display text-2xl">Your Order</h2>
-    <button id="closeCart" class="text-crema/60 hover:text-crema text-2xl leading-none">×</button>
-  </div>
-  <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-  <div class="p-6 border-t border-gold/15 space-y-4">
-    <div class="flex items-center gap-3">
-      <label class="text-sm text-crema/70">Tip</label>
-      <div class="flex gap-2 flex-wrap">
-        <button data-tip="0" class="tipBtn px-3 py-1 rounded-full border border-gold/30 text-xs">None</button>
-        <button data-tip="2" class="tipBtn px-3 py-1 rounded-full border border-gold/30 text-xs">$2</button>
-        <button data-tip="5" class="tipBtn px-3 py-1 rounded-full border border-gold/30 text-xs">$5</button>
-        <button data-tip="10" class="tipBtn px-3 py-1 rounded-full border border-gold/30 text-xs">$10</button>
+  <!-- Payment currency selection -->
+  <div class="modal hidden" id="currencyModal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">✕</button>
+      <h2>Pay with…</h2>
+      <p id="selectedDrinkLabel" class="selected-label"></p>
+      <div class="currency-grid" id="currencyGrid">
+        <button data-currency="usdttrc20">💵 USDT (TRC20)</button>
+        <button data-currency="usdterc20">💵 USDT (ERC20)</button>
+        <button data-currency="btc">₿ Bitcoin</button>
+        <button data-currency="eth">Ξ Ethereum</button>
+        <button data-currency="ltc">Ł Litecoin</button>
+        <button data-currency="bnbbsc">BNB (BSC)</button>
+        <button data-currency="trx">TRON</button>
+        <button data-currency="doge">Ð Dogecoin</button>
       </div>
     </div>
-    <input id="note" maxlength="120" placeholder="Add a note (optional)"
-           class="w-full bg-mocha/40 border border-gold/20 rounded-lg px-3 py-2 text-sm placeholder:text-crema/40 focus:outline-none focus:border-gold/60" />
-    <div class="flex items-center justify-between text-sm text-crema/70">
-      <span>Subtotal</span><span id="subtotal">$0.00</span>
-    </div>
-    <div class="flex items-center justify-between text-sm text-crema/70">
-      <span>Tip</span><span id="tipLine">$0.00</span>
-    </div>
-    <div class="flex items-center justify-between font-display text-xl">
-      <span>Total</span><span id="total" class="text-gold">$0.00</span>
-    </div>
-    <button id="payBtn" class="w-full bg-gradient-to-r from-gold to-caramel text-espresso font-semibold rounded-xl py-3 hover:opacity-95 transition disabled:opacity-40 disabled:cursor-not-allowed">
-      Pay with crypto
-    </button>
-    <p class="text-[11px] text-crema/50 text-center">Powered by NOWPayments · 350+ currencies</p>
   </div>
-</aside>
 
-<!-- Toast -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-espresso border border-gold/30 text-crema px-5 py-3 rounded-xl shadow-xl opacity-0 pointer-events-none transition z-[60]"></div>
-
-<script>
-  const state = {
-    menu: [],
-    cart: {},        // id -> qty
-    tip: 0,
-  };
-
-  const $ = (s) => document.querySelector(s);
-
-  // ----- Load menu -----
-  async function loadMenu() {
-    const r = await fetch('/api/menu');
-    state.menu = await r.json();
-    renderMenu();
-  }
-
-  function renderMenu() {
-    $('#menuGrid').innerHTML = state.menu.map(item => `
-      <article class="card-hover relative rounded-2xl bg-mocha/40 border border-gold/15 p-6 flex flex-col">
-        <div class="relative self-center mb-4">
-          <div class="steam absolute inset-x-0 -top-1 mx-auto w-6 h-6"></div>
-          <div class="text-5xl">${item.emoji}</div>
+  <!-- Payment details -->
+  <div class="modal hidden" id="paymentModal">
+    <div class="modal-content">
+      <button class="close-btn" id="closePayment">✕</button>
+      <h2>Complete Payment</h2>
+      <div class="payment-info">
+        <div class="row"><span>Order:</span><strong id="pOrder"></strong></div>
+        <div class="row"><span>Amount:</span><strong id="pAmount"></strong></div>
+        <div class="row"><span>Status:</span><strong id="pStatus">waiting</strong></div>
+      </div>
+      <div class="pay-address">
+        <label>Send to:</label>
+        <div class="addr-box">
+          <code id="pAddress"></code>
+          <button class="copy-btn" id="copyAddr">Copy</button>
         </div>
-        <h3 class="font-display text-xl">${item.name}</h3>
-        <p class="text-crema/50 text-sm mt-1">Freshly made, always.</p>
-        <div class="mt-5 flex items-center justify-between">
-          <span class="text-gold font-semibold">$${item.price.toFixed(2)}</span>
-          <button data-add="${item.id}" class="rounded-full bg-gold/90 hover:bg-gold text-espresso text-sm font-semibold px-4 py-1.5 transition">
-            Add
-          </button>
-        </div>
-      </article>
-    `).join('');
-  }
+      </div>
+      <p class="note">⚠️ Send the exact amount. Payment expires in ~20 min.</p>
+      <div class="status-poller" id="poller">⏳ Waiting for confirmation…</div>
+    </div>
+  </div>
 
-  // ----- Cart -----
-  function addToCart(id) {
-    state.cart[id] = (state.cart[id] || 0) + 1;
-    updateCart();
-    toast('Added to order');
-  }
-  function removeFromCart(id) {
-    delete state.cart[id];
-    updateCart();
-  }
-  function changeQty(id, delta) {
-    const next = (state.cart[id] || 0) + delta;
-    if (next <= 0) delete state.cart[id];
-    else state.cart[id] = next;
-    updateCart();
-  }
+  <footer>
+    <p>Powered by <a href="https://nowpayments.io" target="_blank">NOWPayments</a> · Crypto accepted 🌍</p>
+  </footer>
+</div>
 
-  function updateCart() {
-    const entries = Object.entries(state.cart);
-    const count = entries.reduce((s, [, q]) => s + q, 0);
-    $('#cartCount').textContent = count;
-
-    $('#cartItems').innerHTML = entries.length === 0
-      ? `<p class="text-crema/40 text-sm text-center mt-10">Your order is empty.<br/>Pick something from the menu.</p>`
-      : entries.map(([id, qty]) => {
-          const item = state.menu.find(m => m.id === id);
-          return `
-            <div class="flex items-center gap-3 bg-mocha/40 border border-gold/10 rounded-xl p-3">
-              <div class="text-2xl">${item.emoji}</div>
-              <div class="flex-1">
-                <p class="text-sm font-medium">${item.name}</p>
-                <p class="text-xs text-crema/50">$${item.price.toFixed(2)}</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <button data-qty="${id}:-1" class="w-7 h-7 rounded-full border border-gold/30 text-sm">−</button>
-                <span class="w-5 text-center text-sm">${qty}</span>
-                <button data-qty="${id}:1" class="w-7 h-7 rounded-full border border-gold/30 text-sm">+</button>
-              </div>
-              <button data-remove="${id}" class="text-crema/40 hover:text-crema text-lg">×</button>
-            </div>`;
-        }).join('');
-
-    const subtotal = entries.reduce((s, [id, q]) => {
-      const item = state.menu.find(m => m.id === id);
-      return s + item.price * q;
-    }, 0);
-    const total = subtotal + state.tip;
-    $('#subtotal').textContent = `$${subtotal.toFixed(2)}`;
-    $('#tipLine').textContent  = `$${state.tip.toFixed(2)}`;
-    $('#total').textContent    = `$${total.toFixed(2)}`;
-
-    document.querySelectorAll('.tipBtn').forEach(b => {
-      b.classList.toggle('bg-gold', Number(b.dataset.tip) === state.tip);
-      b.classList.toggle('text-espresso', Number(b.dataset.tip) === state.tip);
-    });
-  }
-
-  // ----- Drawer -----
-  function openCart() {
-    $('#cartDrawer').classList.remove('translate-x-full');
-    $('#cartOverlay').classList.remove('hidden');
-  }
-  function closeCart() {
-    $('#cartDrawer').classList.add('translate-x-full');
-    $('#cartOverlay').classList.add('hidden');
-  }
-
-  // ----- Toast -----
-  let toastTimer;
-  function toast(msg) {
-    const el = $('#toast');
-    el.textContent = msg;
-    el.style.opacity = '1';
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
-  }
-
-  // ----- Payment -----
-  async function pay() {
-    const items = Object.entries(state.cart).map(([id, qty]) => ({ id, qty }));
-    if (items.length === 0) return toast('Your order is empty');
-
-    const btn = $('#payBtn');
-    btn.disabled = true;
-    btn.textContent = 'Opening checkout…';
-
-    try {
-      const r = await fetch('/api/create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, tip: state.tip, note: $('#note').value.trim() }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Payment failed');
-      window.location.href = data.invoiceUrl;
-    } catch (err) {
-      toast(err.message);
-      btn.disabled = false;
-      btn.textContent = 'Pay with crypto';
-    }
-  }
-
-  // ----- Events (delegated) -----
-  document.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-add],[data-qty],[data-remove],.tipBtn,#cartBtn,#closeCart,#cartOverlay,#payBtn');
-    if (!t) return;
-    if (t.dataset.add)    addToCart(t.dataset.add);
-    else if (t.dataset.remove) removeFromCart(t.dataset.remove);
-    else if (t.dataset.qty) {
-      const [id, d] = t.dataset.qty.split(':');
-      changeQty(id, Number(d));
-    }
-    else if (t.classList.contains('tipBtn')) {
-      state.tip = Number(t.dataset.tip);
-      updateCart();
-    }
-    else if (t.id === 'cartBtn') openCart();
-    else if (t.id === 'closeCart' || t.id === 'cartOverlay') closeCart();
-    else if (t.id === 'payBtn') pay();
-  });
-
-  // ----- Post-payment banner -----
-  const params = new URLSearchParams(location.search);
-  if (params.get('status') === 'success') {
-    setTimeout(() => toast('Thank you — your coffee is brewing ☕'), 300);
-    history.replaceState({}, '', '/');
-  } else if (params.get('status') === 'cancelled') {
-    setTimeout(() => toast('Payment cancelled'), 300);
-    history.replaceState({}, '', '/');
-  }
-
-  // Init
-  loadMenu().then(updateCart);
-</script>
+<script src="script.js"></script>
 </body>
 </html>
